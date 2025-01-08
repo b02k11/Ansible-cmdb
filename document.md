@@ -12,9 +12,10 @@ It supports multiple types of output (html, csv, sql, etc) and extending
 information gathered by Ansible with custom data. For each host it also shows
 the groups, host variables, custom variables and machine-local facts.
 
-![overview](image.png)
+![image](https://github.com/user-attachments/assets/ded644f3-5fe1-4d1e-925d-284a8ee9c650)
 
-![localhost](image-1.png)
+![image](https://github.com/user-attachments/assets/4be70902-f08b-4962-9094-7e5c3328dc51)
+
 
 
 Features
@@ -80,7 +81,9 @@ the groups, host variables, custom variables and machine-local facts.
 
 ## Example output
 
-![alt text](image-2.png)
+![image](https://github.com/user-attachments/assets/1d3dc7f5-7c1e-40ca-bb3e-76335f9dacc5)
+
+
 
 
 ## Output formats
@@ -276,7 +279,8 @@ MySQL database.
     $ echo "CREATE DATABASE ansiblecmdb" | mysql
     $ mysql ansiblecmdb < cmdb.sql
 
-![alt text](image-4.png)
+![image](https://github.com/user-attachments/assets/cf77933e-8f07-4583-9c7f-6f6e8d917021)
+
 
 ## Custom facts
 To include the custom fact we can create Json file in /etc/ansible/fact.d 
@@ -307,6 +311,7 @@ that will be included under ansible locat in fact file while collecting facts.
 }
 
 ```
+![image](https://github.com/user-attachments/assets/e300ab91-bf61-44fd-b911-dbb158547b74)
 
 ## Custom columns
 
@@ -395,6 +400,9 @@ To create custom coloum in sql template we can customize /ansible-cmdb/src/ansib
   return jsonxs(host, 'ansible_facts.ansible_loadavg.5m', default='')
 %></%def>
 ```
+
+![image](https://github.com/user-attachments/assets/cd8d7f34-14b5-4e88-9aee-cc30784c5fd7)
+
 Ansible-cmdb Repository : [Ansible-cmdb-github](https://github.com/fboender/ansible-cmdb)
 
 Ansible-cmdb official document : [Ansible-cmdb](https://ansible-cmdb.readthedocs.io/en/latest/)
