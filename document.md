@@ -66,20 +66,9 @@ Getting started
 That's it! Please do read the full documentation on usage, as there are some
 caveats to how you can use the generated HTML.
 
-Documentation
--------------
-
-All documentation can be viewed at [readthedocs.io](http://ansible-cmdb.readthedocs.io/en/latest/).
-
-* [Full documentation](http://ansible-cmdb.readthedocs.io/en/latest/)
-* [Requirements and installation](http://ansible-cmdb.readthedocs.io/en/latest/installation/)
-* [Usage](http://ansible-cmdb.readthedocs.io/en/latest/usage/)
-* [Contributing and development](http://ansible-cmdb.readthedocs.io/en/latest/dev/)
-
-
 ## About
 
-[Ansible-cmdb](https://github.com/fboender/ansible-cmdb) takes the output of
+Ansible cmdb takes the output of
 Ansible's [fact
 gathering](http://docs.ansible.com/ansible/latest/modules/setup_module.html)
 and converts it into a static HTML overview page (and other things) containing
@@ -230,36 +219,6 @@ The ''html_fancy'' template supports four special variables:
 - `comment`: A comment for the host.
 - `ext_id`: An external unique identifier for the host.
 
-For example, let's say we have the following `hosts` file:
-
-    [cust.megacorp]
-    db1.dev.megacorp.com   dtap=dev  comment="Old database server"
-    db2.dev.megacorp.com   dtap=dev  comment="New database server"
-    test.megacorp.com      dtap=test
-    acc.megacorp.com       dtap=acc  comment="24/7 support"
-    megacorp.com           dtap=prod comment="Hosting by Foo" ext_id="SRV_10029"
-    
-    [os.redhat]
-    megacorp.com
-    acc.megacorp.com
-    test.megacorp.com
-    db2.dev.megacorp.com
-    
-    [os.debian]
-    db1.dev.megacorp.com
-
-The host `acc.megacorp.com` will have groups 'cust.megacorp' and 'os.redhat',
-will have a comment saying it has 24/7 support and will be marked as a `acc`
-server. Megacorp.com host will have an external ID of "SRV_10029", which will
-be required by for communicating with Foo company about hosting.
-
-These variables are included in the host overview table in the `html_fancy`
-templates.
-
-See the official Ansible documentation on [Host
-variables](http://docs.ansible.com/intro_inventory.html#host-variables) for
-more information on host variables.
-
 
 ## Specifying templates
 
@@ -274,19 +233,6 @@ Templates can be referred to by name or by relative/absolute path to the
 `.tpl` file. This lets you implement your own templates. For example:
 
     $ ansible-cmdb -t /home/fboender/my_template out/ > my_template.html
-
-## Template parameters
-
-Some templates support parameters that influence their output. Parameters are
-specified using the `-p` or `--parameter` option to `ansible-cmdb`. Multiple
-parameters may be specified by separating them with commas. There must be *no*
-spaces in the parameters.
-
-For example, to specify the `html_fancy` template with local Javascript
-libraries and closed trees:
-
-    ansible-cmdb -t html_fancy -p local_js=1,collapsed=1 out > overview.html
-
 
 ## Available templates
 
@@ -307,17 +253,6 @@ Ansible-cmdb currently provides the following templates out of the box:
 A fancy HTML page that uses jQuery and DataTables to give you a searchable,
 sortable table overview of all hosts with detailed information just a click
 away.
-
-It takes optional parameters:
-
-* `local_js=0|1`: Load resources from local disk (default=`0`). If set, will
-  load resources from the local disk instead of over the network.
-* `collapsed=0|1`: Controls whether host information is collapsed by default
-  or not. A value of `1` will collapse all host information by default
-  (default='0').
-* `host_details=0|1`: Render host details or not. (default=`1`)
-* `skip_empty=0|1`: Skip hosts for which no facts were gathered (unreachable,
-  etc). (default=`0`).
 
 **html_fancy_split**:
 
@@ -341,84 +276,42 @@ MySQL database.
     $ echo "CREATE DATABASE ansiblecmdb" | mysql
     $ mysql ansiblecmdb < cmdb.sql
 
-
-
-## Extending facts
-
-You can specify multiple directories that need to be scanned for facts. This
-lets you override, extend and fill in missing information on hosts. You can
-also use this to create completely new hosts or to add custom facts to your
-hosts.
-
-Extended facts are basically the same as normal Ansible fact files. When you
-specify multiple fact directories, Ansible-cmdb scans all of the in order and
-overlays the facts.
-
-Note that the host *must still* be present in your hosts file, or it will not
-generate anything.
-
-If you're using the `--fact-cache` option, you must omit the `ansible_facts`
-key and put items in the root of the JSON. This also means that you can only
-extend native ansible facts and not information read from the `hosts` file by
-ansible-cmdb.
+![alt text](image-4.png)
 
 ## Custom facts
+To include the custom fact we can create Json file in /etc/ansible/fact.d 
+that will be included under ansible locat in fact file while collecting facts.
 
-You can add custom facts (not to be confused with 'custom variables') to you
-hosts. These facts will be displayed in the `html_fancy` template by default
-under the 'Custom facts' header.
+```
+"ansible_local": {
+            "app3_25": {
+                "ModemManager.service": {
+                    "name": "ModemManager.service",
+                    "source": "systemd",
+                    "state": "running",
+                    "status": "enabled"
+                },
+                "NetworkManager-dispatcher.service": {
+                    "name": "NetworkManager-dispatcher.service",
+                    "source": "systemd",
+                    "state": "inactive",
+                    "status": "enabled"
+                },
+                "NetworkManager-wait-online.service": {
+                    "name": "NetworkManager-wait-online.service",
+                    "source": "systemd",
+                    "state": "stopped",
+                    "status": "enabled"
+                }
+            }
+}
 
-**Note** that these are not the same as Host local facts. Host local facts are
-facts that Ansible reads from each of your host's `/etc/ansible/facts.d`
-directory. Those are also included in Ansible-cmdb's html_fancy templates, but
-under the "Host local facts" heading. The custom facts explained here are
-manually defined on the host where you run ansible-cmdb, and have little to do
-with Ansible itself.
-
-Let's say you want to add information about installed software to your facts.
-
-Create a directory for you custom facts:
-
-    $ mkdir out_custom
-
-Create a file in it for the host where you want to add the custom facts:
-
-    $ vi custfact.test.local
-    {
-      "custom_facts": {
-        "software": {
-          "apache": {
-            "version": "2.4",
-            "install_src": "backport_deb"
-          },
-          "mysql-server": {
-            "version": "5.5",
-            "install_src": "manual_compile"
-          },
-          "redis": {
-            "version": "3.0.7",
-            "install_src": "manual_compile"
-          }
-        }
-      }
-    }
-
-For this to work the facts **must** be listed under the **custom_facts** key.
-
-Generate the overview:
-
-    ./ansible-cmdb out/ out_custom/ > overview.html
-
-The software items will be listed under the "*Custom facts*" heading.
-
+```
 
 ## Custom columns
 
 You can add custom columns to the host overview with the `-C` (`--cust-cols`)
-option. This allows you to specify
-[jsonxs](https://github.com/fboender/jsonxs) expressions or [Mako
-template](https://www.makotemplates.org/) fragments to extract and
-display custom host facts.
+option.
 
 Custom columns are currently only supported by the `html_fancy` and
 `html_fancy_split` templates.
@@ -486,24 +379,6 @@ consist of the following key/values:
 * The `sType` value determines how the values will be sorted in the host
   overview. Possible values include `string` and `num`. **Required**
 * `visible` determines whether the column will be active (shown) by default.
-  **Required**
-* The `jsonxs` expression, if specified points to an entry in the facts files
-  for each host, and determines what will be shown for the column's value for
-  each host.  The easiest way to figure out a jsonxs expression is by opening
-  one of the gathered facts files in a json editor. Please see
-  [jsonxs](https://github.com/fboender/jsonxs) for info on how to write jsonxs
-  expressions. **Optional**
-* The `tpl` expression, if specified, is a [Mako](http://www.makotemplates.org/)
-  template fragment. A single variable `host` is made available in this
-  template. Care must be taken when accessing host information. If one of the
-  hosts is missing the information you're trying to access, the template will
-  not render and ansible-cmdb will crash (usually with a 'KeyError' message).
-  You should always use the `get()` method and specify a default value. E.g.
-  `host.get('ansible_facts', {}).get('ansible_dns', {}).get('nameservers',
-  [])`. Alternatively (and recommended) is that you use `jsonxs` to access
-  your info (and specify `default=...`). See the example above. **Optional**
-
-Either `jsonxs` or `tpl` is required.
 
 To use it:
 
@@ -513,47 +388,13 @@ When opening the `cmdb.html` file in your browser, you may have to hit the
 'Clear settings' button in the top-right before the new columns show up or
 when you get strange behaviour.
 
+## Custom template in SQL
+To create custom coloum in sql template we can customize /ansible-cmdb/src/ansiblecmdb/data/tpl/sql.tpl file and can include information from ansible fact.
+```
+<%def name="col_load_avg(host)"><%
+  return jsonxs(host, 'ansible_facts.ansible_loadavg.5m', default='')
+%></%def>
+```
+Ansible-cmdb Repository : [Ansible-cmdb-github](https://github.com/fboender/ansible-cmdb)
 
-## Custom templates
-
-It's possible to create custom templates to build completely different CMDBs
-or to enhance the existing ones. Ansible-cmdb uses the [Mako templating
-engine](http://www.makotemplates.org/) to render output.
-
-For example, if you want to add a custom column to the `html_fancy` template
-(note that it's easier to just use the `--cust-cols` option. For more info see
-above):
-
-1. Make a copy of the default `html_fancy` template in a new dir. Here, we'll
-   use files from the ansible-cmdb git repository.
-
-        $ mkdir ~/mytemplate
-        $ cp ~/ansible-cmdb/src/ansiblecmdb/data/tpl/html_fancy.tpl ~/mytemplate/
-        $ cp ~/ansible-cmdb/src/ansiblecmdb/data/tpl/html_fancy_defs.html ~/mytemplate/
-
-1. Edit the `html_fancy_defs.html` file and add an entry to the `cols =`
-   section. In this example, we'll add a column for the "BIOS version".
-
-        <%
-          cols = [
-           ...
-           {"title": "Product Serial","id": "prodserial",    "func": col_prodserial,     "sType": "string", "visible": False},
-           {"title": "BIOS version",  "id": "bios_version",  "func": col_bios_version,   "sType": "string", "visible": True},
-         ]
-
-1. Now you need to implement the `col_biosversion` template function. In the
-   same `html_fancy_defs.html` file, search for the `## Column functions`
-   section. Add a column template function called `col_biosversion`:
-
-           <%def name="col_dtap(host, **kwargs)">
-             ${jsonxs(host, 'hostvars.dtap', default='')}
-           </%def>
-         
-        +  <%def name="col_bios_version(host, **kwargs)">
-        +    ${jsonxs(host, 'ansible_facts.ansible_bios_version', default='')}
-        +  </%def>
-
-1. Finally, render the custom template. For this to work, you **must be in
-   the same directory as the custom template!**.
-
-        ansible-cmdb/src/ansible-cmdb -t ./html_fancy -i ~/ansible/hosts ~/ansible/out/ > cmdb.html
+Ansible-cmdb official document : [Ansible-cmdb](https://ansible-cmdb.readthedocs.io/en/latest/)
